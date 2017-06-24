@@ -4,9 +4,18 @@
   <title>Serial Connect</title>
   <script src="/socket.io/socket.io.js"></script>
   <style type="text/css">
+    body {
+      height: 100vmin;
+      width: 100vmin;
+    }
+    nav {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+    }
     div {
       min-height: 5px;
-      width: 1px;
+      width: .5px;
       float: left;
       background-color: black;
     }
@@ -17,6 +26,10 @@
   </style>
 </head>
 <body>
+  <nav>
+    <button onclick="STOP=false;runFreqs();">Run Test</button>
+    <button onclick="STOP=true;sample.changeFrequency(window.loudestFreq)">Resonance Point</button>
+  </nav>
 
   <script type="text/javascript">
   // Start off by initializing a new context.
@@ -65,45 +78,57 @@
   </script>
 
   <script>
-
-    var amplitude = 0;
-    var loudestFreq = 0;
-    var loudestAmp = 0;
-    var averageAmp = 100;
-    var i = 0,
-        offset = 220,
-        steps = 220;
-
     var sample = new Osc();
     sample.play();
-    sample.changeFrequency(i+offset);
+    sample.changeFrequency(0)
+    // runFreqs();
 
-    setInterval(nextFreq, 20)
+    window.loudestFreq = 0;
 
-    var stop = false;
-    function nextFreq() {
-      if(stop) return;
-      var amp = window.amplitude;
-      averageAmp = Math.floor( (averageAmp + amp)/2 );
+    function runFreqs(stepSize=.5, offset=110, max=220){
+      var amplitude = 0;
+      loudestFreq = 0;
+      var loudestAmp = 0;
+      var averageAmp = 100;
+      var i = stepSize < 0 ? max : offset;
 
-      var freq = i+offset;
       sample.changeFrequency(i+offset);
 
-      console.log(freq, amp);
-      if(amp > loudestAmp) {
-        loudestAmp = amp;
-        loudestFreq = freq;
-      }
+      INTERVAL = setInterval(nextFreq, 20)
 
-      document.body.innerHTML += `<div style="height:${amp*2}px;" data-freq="${freq}"></div>`
+      var stop = false;
+      function nextFreq() {
+        if(stop || window.STOP) return;  // TODO: buggy
+        var amp = window.amplitude;
+        averageAmp = Math.floor( (averageAmp + amp)/2 );
 
-      i+=1;
+        var freq = i+offset;
+        sample.changeFrequency(i+offset);
 
-      if(i > steps) {
-        stop = true;
-        // sample.changeFrequency(loudestFreq);
-        console.log("loudestFreq:", loudestFreq, loudestAmp);
-        console.log("averageAmp:", averageAmp);
+        // console.log(freq, amp);
+        if(amp > loudestAmp) {
+          loudestAmp = amp;
+          loudestFreq = freq;
+        }
+
+        var el = document.querySelector(`[data-freq="${freq}"]`);
+        if(el) {
+          el.setAttribute("style", `height:${amp*2}px;`)
+        } else {
+          document.body.innerHTML += `<div style="height:${amp*2}px;" data-freq="${freq}"></div>`
+        }
+
+        i+=stepSize;
+
+        if(i > max || i < offset) {
+          stop = true;
+          clearInterval(INTERVAL); // TODO: buggy
+          // sample.stop();
+          // sample.changeFrequency(loudestFreq);
+          console.log("loudestFreq:", loudestFreq, loudestAmp);
+          console.log("averageAmp:", averageAmp);
+          runFreqs(stepSize*-1);
+        }
       }
     }
 
