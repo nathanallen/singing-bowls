@@ -3,6 +3,18 @@
 <head>
   <title>Serial Connect</title>
   <script src="/socket.io/socket.io.js"></script>
+  <style type="text/css">
+    div {
+      min-height: 5px;
+      width: 1px;
+      float: left;
+      background-color: black;
+    }
+
+    div:hover {
+      background-color: blue;
+    }
+  </style>
 </head>
 <body>
 
@@ -58,14 +70,15 @@
     var loudestFreq = 0;
     var loudestAmp = 0;
     var averageAmp = 100;
-    var freq = 220,
-        max = 440;
+    var i = 0,
+        offset = 220,
+        steps = 220;
 
     var sample = new Osc();
     sample.play();
-    sample.changeFrequency(freq);
+    sample.changeFrequency(i+offset);
 
-    setInterval(nextFreq, 300)
+    setInterval(nextFreq, 20)
 
     var stop = false;
     function nextFreq() {
@@ -73,18 +86,22 @@
       var amp = window.amplitude;
       averageAmp = Math.floor( (averageAmp + amp)/2 );
 
-      sample.changeFrequency(freq)
+      var freq = i+offset;
+      sample.changeFrequency(i+offset);
+
       console.log(freq, amp);
       if(amp > loudestAmp) {
         loudestAmp = amp;
         loudestFreq = freq;
       }
 
-      freq+=5;
+      document.body.innerHTML += `<div style="height:${amp*2}px;" data-freq="${freq}"></div>`
 
-      if(freq > max) {
+      i+=1;
+
+      if(i > steps) {
         stop = true;
-        sample.changeFrequency(loudestFreq);
+        // sample.changeFrequency(loudestFreq);
         console.log("loudestFreq:", loudestFreq, loudestAmp);
         console.log("averageAmp:", averageAmp);
       }
@@ -93,7 +110,7 @@
     var socket = io();
     socket.on('data', function(data) {
       window.amplitude = +data;
-      document.body.innerText = data;
+      // document.body.innerText = data;
     });
     socket.on('error', function() {
       console.error(arguments)
