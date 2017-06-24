@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Serial Connect</title>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+  <script>
+    var socket = io();
+    socket.on('data', function(data) {
+      console.log(data);
+      document.body.innerText = data;
+    });
+    socket.on('error', function() {
+      console.error(arguments)
+    });
+  </script>
+
+</body>
+</html>
