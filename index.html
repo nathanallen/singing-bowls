@@ -6,10 +6,93 @@
 </head>
 <body>
 
+  <script type="text/javascript">
+  // Start off by initializing a new context.
+  context = new (window.AudioContext || window.webkitAudioContext)();
+
+  if (!context.createGain)
+    context.createGain = context.createGainNode;
+  if (!context.createDelay)
+    context.createDelay = context.createDelayNode;
+  if (!context.createScriptProcessor)
+    context.createScriptProcessor = context.createJavaScriptNode;
+
+
+  function Osc() {
+    this.isPlaying = true;
+  }
+
+  Osc.prototype.play = function() {
+    this.oscillator = context.createOscillator();
+    this.oscillator.connect(context.destination);
+
+    this.oscillator[this.oscillator.start ? 'start' : 'noteOn'](0);
+  };
+
+  Osc.prototype.stop = function() {
+    this.oscillator.stop(0);
+  };
+
+  Osc.prototype.toggle = function() {
+    (this.isPlaying ? this.stop() : this.play());
+    this.isPlaying = !this.isPlaying;
+  };
+
+  Osc.prototype.changeFrequency = function(val) {
+    this.oscillator.frequency.value = val;
+  };
+
+  Osc.prototype.changeDetune = function(val) {
+    this.oscillator.detune.value = val;
+  };
+
+  Osc.prototype.changeType = function(type) {
+    this.oscillator.type = type;
+  };
+
+  </script>
+
   <script>
+
+    var amplitude = 0;
+    var loudestFreq = 0;
+    var loudestAmp = 0;
+    var averageAmp = 100;
+    var freq = 220,
+        max = 440;
+
+    var sample = new Osc();
+    sample.play();
+    sample.changeFrequency(freq);
+
+    setInterval(nextFreq, 300)
+
+    var stop = false;
+    function nextFreq() {
+      if(stop) return;
+      var amp = window.amplitude;
+      averageAmp = Math.floor( (averageAmp + amp)/2 );
+
+      sample.changeFrequency(freq)
+      console.log(freq, amp);
+      if(amp > loudestAmp) {
+        loudestAmp = amp;
+        loudestFreq = freq;
+      }
+
+      freq+=5;
+
+      if(freq > max) {
+        stop = true;
+        sample.changeFrequency(loudestFreq);
+        console.log("loudestFreq:", loudestFreq, loudestAmp);
+        console.log("averageAmp:", averageAmp);
+      }
+    }
+
     var socket = io();
     socket.on('data', function(data) {
-      console.log(data);
+      window.amplitude = +data;
       document.body.innerText = data;
     });
     socket.on('error', function() {
