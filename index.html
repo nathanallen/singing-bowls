@@ -122,17 +122,14 @@
         if(stop || window.STOP) return;  // TODO: buggy
         var amp = window.amplitude;
 
-        var avg = filteredAmplitude();
-        if (amp <= avg/4 ) {
+        averageAmp = filteredAmplitude();
+        if (amp <= averageAmp/4 ) {
           console.log("too low", amp)
           return;
-        } else if (amp >= avg*4) {
+        } else if (amp >= averageAmp*4) {
           console.log("too high", amp)
           return;
         }
-
-        averageAmp = avg;
-
 
         sample.changeFrequency(freq);
 
