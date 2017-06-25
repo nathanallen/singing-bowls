@@ -96,6 +96,18 @@
     };
 
 
+    var graphView = (function(){
+      var els = {};
+      return function(freq, amp){
+        if(!els[freq]) {
+          els[freq] = document.createElement("div");;
+          document.body.appendChild(els[freq]);
+        }
+        els[freq].setAttribute("style", `height:${amp*2}px;`);
+        els[freq].setAttribute("data-freq", freq);
+      }
+    }())
+
     function FrequencySampler(osc, audioIn, stepSize=1, offset=440, max=880) {
       this.freq = stepSize < 0 ? max : offset;
       this.stepSize = stepSize;
@@ -132,12 +144,7 @@
         this.loudest.freq = this.freq;
       }
 
-      var el = document.querySelector(`[data-freq="${this.freq}"]`);
-      if(el) {
-        el.setAttribute("style", `height:${amp*2}px;`)
-      } else {
-        document.body.innerHTML += `<div style="height:${amp*2}px;" data-freq="${this.freq}"></div>`
-      }
+      setTimeout(graphView(this.freq, amp), 0);
 
       this.freq += this.stepSize;
 
@@ -150,7 +157,6 @@
         this.play();
       }
     }
-
 
     var osc = new Osc();
     osc.play();
