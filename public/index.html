@@ -88,6 +88,9 @@
       }
       this.samples[this.samples_idx] = gain || window.amplitude;
       this.samples_idx++;
+
+      if (gain < this.running_min) { this.running_min = gain };
+      if (gain > this.running_max) { this.running_max = gain };
     }
     AudioIn.prototype.runningAverage = function(){
       return this.running_avg;
@@ -95,6 +98,27 @@
     AudioIn.prototype.currentAmplitude = function(){
       return this.samples[this.samples_idx-1];
     }
+    AudioIn.prototype.sample = function() {
+      var amp = this.currentAmplitude(),
+          avg = this.runningAverage(),
+          good_sample = true;
+
+      if (amp <= avg/5 ) {
+        console.log("too low", amp)
+        good_sample = false;
+      } else if (amp >= avg*5) {
+        console.log("too high", amp)
+        good_sample = false;
+      }
+
+      return {
+        amplitude: this.currentAmplitude(),
+        avg: this.runningAverage(),
+        max: this.running_max,
+        min: this.running_min,
+        good_sample: good_sample
+      }
+    };
 
     var audioIn = new AudioIn();
 
@@ -115,18 +139,11 @@
       var stop = false;
       function nextFreq() {
         if(stop || window.STOP) return;  // TODO: buggy
-        var amp = audioIn.currentAmplitude();
 
-        averageAmp = audioIn.runningAverage();
+        var heard = audioIn.sample();
+        if(!heard.good_sample) { return; }
 
-        if (amp <= averageAmp/5 ) {
-          console.log("too low", amp)
-          return;
-        } else if (amp >= averageAmp*5) {
-          console.log("too high", amp)
-          return;
-        }
-
+        var amp = heard.amplitude;
         sample.changeFrequency(freq);
 
         // console.log(freq, amp);
@@ -149,7 +166,7 @@
           sample.stop();
           clearInterval(INTERVAL); // TODO: buggy
           console.log("loudestFreq:", loudestFreq, loudestAmp);
-          console.log("averageAmp:", averageAmp);
+          console.log("averageAmp:", heard.avg);
           // runFreqs(stepSize*-1);
         }
       }
