@@ -129,7 +129,7 @@
       this.osc.changeFrequency(0);
     }
     FrequencySampler.prototype.play = function(){
-      this.stop();
+      this.osc.changeFrequency(this.freq);
       this.intervalID = setInterval(this._nextFreq.bind(this), 10);
     }
     FrequencySampler.prototype._nextFreq = function() {
@@ -137,7 +137,6 @@
       if(!heard.good_sample) { return; }
 
       var amp = heard.amplitude;
-      this.osc.changeFrequency(this.freq);
 
       if(amp > this.loudest.amp) {
         this.loudest.amp = amp;
@@ -147,6 +146,7 @@
       setTimeout(graphView(this.freq, amp), 0);
 
       this.freq += this.stepSize;
+      this.osc.changeFrequency(this.freq);
 
       if(this.freq > this.max || this.freq < this.offset) {
         clearInterval(this.intervalID);
