@@ -3,7 +3,9 @@
 <head>
   <title>Serial Connect</title>
   <script src="/socket.io/socket.io.js"></script>
-    <script src="/oscillator.js"></script>
+  <script src="/oscillator.js"></script>
+
+
   <style type="text/css">
     body {
       height: 100vmin;
@@ -69,27 +71,32 @@
     function AudioIn() {
       this.running_min = 0;
       this.running_max = 0;
-      this.running_mvg  = 0;
+      this.running_avg  = 0;
       this.samples = [];
       this.num_samples = 128;
       this.samples_idx = 0;
     }
-    AudioIn.incoming = function(gain){
+    AudioIn.prototype.incoming = function(gain){
       if(this.samples_idx >= this.num_samples) {
         this.samples_idx = 0;
 
-        var totals = samples.reduce(function(acc, v){
+        var totals = this.samples.reduce(function(acc, v){
           return acc + v;
         }, 0) / this.num_samples;
 
         this.running_avg = Math.floor( (this.running_avg + totals) / 2 );
       }
-      amplitudes[this.samples_idx] = gain || window.amplitude;
+      this.samples[this.samples_idx] = gain || window.amplitude;
       this.samples_idx++;
     }
-    AudioIn.runningAverage = function(){
+    AudioIn.prototype.runningAverage = function(){
       return this.running_avg;
     }
+    AudioIn.prototype.currentAmplitude = function(){
+      return this.samples[this.samples_idx-1];
+    }
+
+    var audioIn = new AudioIn();
 
 
     function runFreqs(stepSize=1, offset=440, max=880){
@@ -108,9 +115,10 @@
       var stop = false;
       function nextFreq() {
         if(stop || window.STOP) return;  // TODO: buggy
-        var amp = window.amplitude;
+        var amp = audioIn.currentAmplitude();
 
-        averageAmp = AudioIn.runningAverage();
+        averageAmp = audioIn.runningAverage();
+
         if (amp <= averageAmp/5 ) {
           console.log("too low", amp)
           return;
@@ -149,7 +157,7 @@
 
     var socket = io();
     socket.on('data', function(data) {
-      AudioIn.incmoing(+data);
+      audioIn.incoming(+data);
       // window.amplitude = +data;
       // document.body.innerText = data;
     });
