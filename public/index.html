@@ -3,6 +3,7 @@
 <head>
   <title>Serial Connect</title>
   <script src="/socket.io/socket.io.js"></script>
+    <script src="/oscillator.js"></script>
   <style type="text/css">
     body {
       height: 100vmin;
@@ -39,78 +40,57 @@
     <button onclick="STOP=true;sample.changeFrequency(window.loudestFreq)">Resonance Point</button>
   </nav>
 
-  <script type="text/javascript">
-  // Start off by initializing a new context.
-  context = new (window.AudioContext || window.webkitAudioContext)();
-
-  if (!context.createGain)
-    context.createGain = context.createGainNode;
-  if (!context.createDelay)
-    context.createDelay = context.createDelayNode;
-  if (!context.createScriptProcessor)
-    context.createScriptProcessor = context.createJavaScriptNode;
-
-
-  function Osc() {
-    this.isPlaying = true;
-  }
-
-  Osc.prototype.play = function() {
-    this.oscillator = context.createOscillator();
-    this.oscillator.connect(context.destination);
-
-    this.oscillator[this.oscillator.start ? 'start' : 'noteOn'](0);
-  };
-
-  Osc.prototype.stop = function() {
-    this.oscillator.stop(0);
-  };
-
-  Osc.prototype.toggle = function() {
-    (this.isPlaying ? this.stop() : this.play());
-    this.isPlaying = !this.isPlaying;
-  };
-
-  Osc.prototype.changeFrequency = function(val) {
-    this.oscillator.frequency.value = val;
-  };
-
-  Osc.prototype.changeDetune = function(val) {
-    this.oscillator.detune.value = val;
-  };
-
-  Osc.prototype.changeType = function(type) {
-    this.oscillator.type = type;
-  };
-
-  </script>
-
   <script>
     var sample = new Osc();
     sample.play();
     sample.changeFrequency(0)
-    // runFreqs();
 
     window.loudestFreq = 0;
 
-    var filteredAmplitude = (function (){
-      var running_average = 5;
-      var amplitudes = [];
-      var i = -1;
-      var samples = 127;
-      return function filteredAmplitude() {
-        if(i > samples) {
-          i = 0;
-          var totals = amplitudes.reduce(function(acc, v){
-            return acc + v;
-          }, 0) / amplitudes.length;
-          running_average = Math.floor( (running_average + totals) / 2 );
-        }
-        amplitudes[i] = window.amplitude;
-        i++;
-        return running_average;
+    // var filteredAmplitude = (function (){
+    //   var running_average = 5;
+    //   var amplitudes = [];
+    //   var i = -1;
+    //   var samples = 127;
+    //   return function filteredAmplitude() {
+    //     if(i > samples) {
+    //       i = 0;
+    //       var totals = amplitudes.reduce(function(acc, v){
+    //         return acc + v;
+    //       }, 0) / amplitudes.length;
+    //       running_average = Math.floor( (running_average + totals) / 2 );
+    //     }
+    //     amplitudes[i] = window.amplitude;
+    //     i++;
+    //     return running_average;
+    //   }
+    // }())
+
+    function AudioIn() {
+      this.running_min = 0;
+      this.running_max = 0;
+      this.running_mvg  = 0;
+      this.samples = [];
+      this.num_samples = 128;
+      this.samples_idx = 0;
+    }
+    AudioIn.incoming = function(gain){
+      if(this.samples_idx >= this.num_samples) {
+        this.samples_idx = 0;
+
+        var totals = samples.reduce(function(acc, v){
+          return acc + v;
+        }, 0) / this.num_samples;
+
+        this.running_avg = Math.floor( (this.running_avg + totals) / 2 );
       }
-    }())
+      amplitudes[this.samples_idx] = gain || window.amplitude;
+      this.samples_idx++;
+    }
+    AudioIn.runningAverage = function(){
+      return this.running_avg;
+    }
+
 
     function runFreqs(stepSize=1, offset=440, max=880){
       var amplitude = 0;
@@ -130,7 +110,7 @@
         if(stop || window.STOP) return;  // TODO: buggy
         var amp = window.amplitude;
 
-        averageAmp = filteredAmplitude();
+        averageAmp = AudioIn.runningAverage();
         if (amp <= averageAmp/5 ) {
           console.log("too low", amp)
           return;
@@ -169,7 +149,8 @@
 
     var socket = io();
     socket.on('data', function(data) {
-      window.amplitude = +data;
+      AudioIn.incmoing(+data);
+      // window.amplitude = +data;
       // document.body.innerText = data;
     });
     socket.on('error', function() {
