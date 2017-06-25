@@ -94,7 +94,7 @@
     window.loudestFreq = 0;
 
     var filteredAmplitude = (function (){
-      var running_average = 20;
+      var running_average = 5;
       var amplitudes = [];
       var i = -1;
       var samples = 127;
@@ -131,10 +131,10 @@
         var amp = window.amplitude;
 
         averageAmp = filteredAmplitude();
-        if (amp <= averageAmp/4 ) {
+        if (amp <= averageAmp/5 ) {
           console.log("too low", amp)
           return;
-        } else if (amp >= averageAmp*4) {
+        } else if (amp >= averageAmp*5) {
           console.log("too high", amp)
           return;
         }
