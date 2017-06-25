@@ -109,9 +109,9 @@
       loudestFreq = 0;
       var loudestAmp = 0;
       var averageAmp = 100;
-      var i = stepSize < 0 ? max : offset;
+      var freq = stepSize < 0 ? max : offset;
 
-      sample.changeFrequency(i+offset);
+      sample.changeFrequency(freq);
 
       INTERVAL = setInterval(nextFreq, 20)
 
@@ -123,19 +123,18 @@
         var amp = window.amplitude;
 
         var avg = filteredAmplitude();
-        if (amp <= avg/3) {
+        if (amp <= avg/4 ) {
           console.log("too low", amp)
           return;
-        } else if (amp >= avg*3) {
+        } else if (amp >= avg*4) {
           console.log("too high", amp)
           return;
         }
 
-        averageAmp = avg //Math.floor( (averageAmp + amp)/2 );
+        averageAmp = avg;
 
 
-        var freq = i+offset;
-        sample.changeFrequency(i+offset);
+        sample.changeFrequency(freq);
 
         // console.log(freq, amp);
         if(amp > loudestAmp) {
@@ -150,14 +149,15 @@
           document.body.innerHTML += `<div style="height:${amp*2}px;" data-freq="${freq}"></div>`
         }
 
-        i+=stepSize;
+        freq+=stepSize;
 
-        if(i > max || i < offset) {
+        if(freq > max || freq < offset) {
           stop = true;
+          sample.stop();
           clearInterval(INTERVAL); // TODO: buggy
           console.log("loudestFreq:", loudestFreq, loudestAmp);
           console.log("averageAmp:", averageAmp);
-          runFreqs(stepSize*-1);
+          // runFreqs(stepSize*-1);
         }
       }
     }
