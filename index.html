@@ -23,6 +23,14 @@
     div:hover {
       background-color: blue;
     }
+    div:hover::before {
+      content: attr(data-freq);
+      display: inline-block;
+      color: black;
+      background-color: yellow;
+      margin-top: 5em;
+      z-index: 1;
+    }
   </style>
 </head>
 <body>
