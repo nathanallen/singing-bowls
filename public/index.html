@@ -38,36 +38,11 @@
 </head>
 <body>
   <nav>
-    <button onclick="STOP=false;runFreqs();">Run Test</button>
-    <button onclick="STOP=true;sample.changeFrequency(window.loudestFreq)">Resonance Point</button>
+    <button onclick="frequencySampler.play();">Start</button>
+    <button onclick="frequencySampler.stop()">Stop</button>
   </nav>
 
   <script>
-    var sample = new Osc();
-    sample.play();
-    sample.changeFrequency(0)
-
-    window.loudestFreq = 0;
-
-    // var filteredAmplitude = (function (){
-    //   var running_average = 5;
-    //   var amplitudes = [];
-    //   var i = -1;
-    //   var samples = 127;
-    //   return function filteredAmplitude() {
-    //     if(i > samples) {
-    //       i = 0;
-    //       var totals = amplitudes.reduce(function(acc, v){
-    //         return acc + v;
-    //       }, 0) / amplitudes.length;
-    //       running_average = Math.floor( (running_average + totals) / 2 );
-    //     }
-    //     amplitudes[i] = window.amplitude;
-    //     i++;
-    //     return running_average;
-    //   }
-    // }())
-
     function AudioIn() {
       this.running_min = 0;
       this.running_max = 0;
@@ -122,55 +97,66 @@
 
     var audioIn = new AudioIn();
 
+    function FrequencySampler(Osc, stepSize=1, offset=440, max=880) {
+      this.freq = stepSize < 0 ? max : offset;
+      this.stepSize = stepSize;
+      this.offset = offset;
+      this.max = max;
 
-    function runFreqs(stepSize=1, offset=440, max=880){
-      var amplitude = 0;
-      loudestFreq = 0;
-      var loudestAmp = 0;
-      var averageAmp = 100;
-      var freq = stepSize < 0 ? max : offset;
+      this.loudest = {
+        freq: 0,
+        amp: 0
+      }
 
-      sample.changeFrequency(freq);
+      this.intervalID = null;
 
-      INTERVAL = setInterval(nextFreq, 20)
+      this.sample = new Osc();
+      this.sample.play();
+      this.sample.changeFrequency(0);
+    }
+    FrequencySampler.prototype.stop = function(){
+      clearInterval(this.intervalID);
+      this.sample.changeFrequency(0);
+    }
+    FrequencySampler.prototype.play = function(){
+      this.sample.changeFrequency(this.freq);
+      this.intervalID = setInterval(this._nextFreq.bind(this), 10);
+    }
+    FrequencySampler.prototype._nextFreq = function() {
+      console.log(this)
+      var heard = audioIn.sample();
+      if(!heard.good_sample) { return; }
 
+      var amp = heard.amplitude;
+      this.sample.changeFrequency(this.freq);
 
+      // console.log(this.freq, amp);
+      if(amp > this.loudest.amp) {
+        this.loudest.amp = amp;
+        this.loudest.freq = this.freq;
+      }
 
-      var stop = false;
-      function nextFreq() {
-        if(stop || window.STOP) return;  // TODO: buggy
+      var el = document.querySelector(`[data-freq="${this.freq}"]`);
+      if(el) {
+        el.setAttribute("style", `height:${amp*2}px;`)
+      } else {
+        document.body.innerHTML += `<div style="height:${amp*2}px;" data-freq="${this.freq}"></div>`
+      }
 
-        var heard = audioIn.sample();
-        if(!heard.good_sample) { return; }
+      this.freq += this.stepSize;
 
-        var amp = heard.amplitude;
-        sample.changeFrequency(freq);
+      if(this.freq > this.max || this.freq < this.offset) {
+        // this.sample.stop();
+        clearInterval(this.intervalID);
+        console.log("loudestFreq:", this.loudest.freq, this.loudest.amp);
+        console.log("averageAmp:", heard.avg);
 
-        // console.log(freq, amp);
-        if(amp > loudestAmp) {
-          loudestAmp = amp;
-          loudestFreq = freq;
-        }
-
-        var el = document.querySelector(`[data-freq="${freq}"]`);
-        if(el) {
-          el.setAttribute("style", `height:${amp*2}px;`)
-        } else {
-          document.body.innerHTML += `<div style="height:${amp*2}px;" data-freq="${freq}"></div>`
-        }
-
-        freq+=stepSize;
-
-        if(freq > max || freq < offset) {
-          stop = true;
-          sample.stop();
-          clearInterval(INTERVAL); // TODO: buggy
-          console.log("loudestFreq:", loudestFreq, loudestAmp);
-          console.log("averageAmp:", heard.avg);
-          // runFreqs(stepSize*-1);
-        }
+        this.stepSize = this.stepSize*-1;
+        this.play();
       }
     }
+
+    var frequencySampler = new FrequencySampler(Osc);
 
     var socket = io();
     socket.on('data', function(data) {
