@@ -63,6 +63,22 @@ var graphView = (function(){
   }
 }())
 
+function MasterSampler(config) {
+  this.samples = [];
+
+  config.register = function register(self){
+    this.samples.push(self);
+  }.bind(this);
+
+  var fs = new FrequencySampler(config);
+}
+MasterSampler.prototype.play = function() {
+  this.samples[this.samples.length-1].play();
+}
+MasterSampler.prototype.stop = function() {
+  this.samples[this.samples.length-1].stop();
+}
+
 function FrequencySampler(config) {
   this.config = config || {};
 
@@ -89,6 +105,8 @@ function FrequencySampler(config) {
 
   this.osc      = osc;
   this.audioIn  = audioIn;
+
+  config.register(this);
 }
 FrequencySampler.prototype.stop = function(){
   clearInterval(this.intervalID);
@@ -121,8 +139,7 @@ FrequencySampler.prototype._nextFreq = function() {
 
     if (this.keep_looping) {
       this.stop();
-      window.frequencySampler = new FrequencySampler(this.config);
-      frequencySampler.play();
+      new FrequencySampler(this.config).play();
     }
   }
 }
@@ -133,7 +150,7 @@ osc.changeFrequency(0);
 
 var audioIn = new AudioIn();
 
-var frequencySampler = new FrequencySampler({osc, audioIn});
+var ms = new MasterSampler({osc, audioIn});
 
 var socket = io();
 socket.on('data', function(data) {
