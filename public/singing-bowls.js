@@ -63,11 +63,22 @@ var graphView = (function(){
   }
 }())
 
-function FrequencySampler(osc, audioIn, stepSize=1, offset=440, max=880) {
+function FrequencySampler(config) {
+  this.config = config || {};
+
+  var osc           = config.osc,
+      audioIn       = config.audioIn,
+      stepSize      = config.stepSize     || 1,
+      offset        = config.offset       || 100,
+      max           = config.max          || 1200,
+      keep_looping  = config.keep_looping || true;
+
   this.freq = stepSize < 0 ? max : offset;
   this.stepSize = stepSize;
+  this.initialStepSize = stepSize;
   this.offset = offset;
   this.max = max;
+  this.keep_looping = keep_looping;
 
   this.loudest = {
     freq: 0,
@@ -76,8 +87,8 @@ function FrequencySampler(osc, audioIn, stepSize=1, offset=440, max=880) {
 
   this.intervalID = null;
 
-  this.osc = osc;
-  this.audioIn = audioIn;
+  this.osc      = osc;
+  this.audioIn  = audioIn;
 }
 FrequencySampler.prototype.stop = function(){
   clearInterval(this.intervalID);
@@ -108,8 +119,11 @@ FrequencySampler.prototype._nextFreq = function() {
     console.log("loudestFreq:", this.loudest.freq, this.loudest.amp);
     console.log("averageAmp:", heard.avg);
 
-    this.stepSize = this.stepSize*-1;
-    this.play();
+    if (this.keep_looping) {
+      this.stop();
+      window.frequencySampler = new FrequencySampler(this.config);
+      frequencySampler.play();
+    }
   }
 }
 
@@ -119,7 +133,7 @@ osc.changeFrequency(0);
 
 var audioIn = new AudioIn();
 
-var frequencySampler = new FrequencySampler(osc, audioIn);
+var frequencySampler = new FrequencySampler({osc, audioIn});
 
 var socket = io();
 socket.on('data', function(data) {
