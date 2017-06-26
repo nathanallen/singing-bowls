@@ -64,19 +64,36 @@ var graphView = (function(){
 }())
 
 function MasterSampler(config) {
-  this.samples = [];
+  this.freq_samplers = [];  // instances of FrequencySampler
+  this.samples = [];        // matrix of samples (integers)
 
   config.register = function register(self){
-    this.samples.push(self);
+    // TODO: place saner limits on how many samples are saved;
+    this.freq_samplers.push(self);
+    this.samples.push(self.samples);
   }.bind(this);
 
   var fs = new FrequencySampler(config);
 }
 MasterSampler.prototype.play = function() {
-  this.samples[this.samples.length-1].play();
+  this.freq_samplers[this.freq_samplers.length-1].play();
 }
 MasterSampler.prototype.stop = function() {
-  this.samples[this.samples.length-1].stop();
+  this.freq_samplers[this.freq_samplers.length-1].stop();
+}
+MasterSampler.prototype.summarize = function() {
+  var samples = this.samples;
+  var nrows = samples.length - 1; // -1 avoids bug when not full sample
+  var nsamps = samples[0].length;
+  var summary_row = [];
+  for(var s=0; s<nsamps; s++) {
+    var sum = 0;
+    for(var r=0; r<nrows; r++) {
+      sum += samples[r][s];
+    }
+    summary_row.push( Math.floor(sum/nrows) );
+  }
+  return summary_row;
 }
 
 function FrequencySampler(config) {
@@ -96,6 +113,7 @@ function FrequencySampler(config) {
   this.max = max;
   this.keep_looping = keep_looping;
 
+  this.samples = [];
   this.loudest = {
     freq: 0,
     amp: 0
@@ -121,6 +139,7 @@ FrequencySampler.prototype._nextFreq = function() {
   if(!heard.good_sample) { return; }
 
   var amp = heard.amplitude;
+  this.samples.push(amp);
 
   if(amp > this.loudest.amp) {
     this.loudest.amp = amp;
