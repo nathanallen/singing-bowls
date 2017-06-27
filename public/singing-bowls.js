@@ -84,7 +84,7 @@ MasterSampler.prototype.stop = function() {
 }
 MasterSampler.prototype.summarize = function() {
   var samples = this.samples;
-  var nrows = samples.length - 1; // -1 avoids bug when not full sample
+  var nrows = samples.length; // BUG: last row may not be full sample
   var nsamps = samples[0].length;
   var summary_row = [];
   for(var s=0; s<nsamps; s++) {
@@ -158,6 +158,9 @@ FrequencySampler.prototype._nextFreq = function() {
     clearInterval(this.intervalID);
     console.log("loudestFreq:", this.loudest.freq, this.loudest.amp);
     console.log("averageAmp:", heard.avg);
+
+    // after each run, draw all gathered samples in d3.js line graph
+    renderSamples( ms.summarize() );
 
     if (this.keep_looping) {
       this.stop();

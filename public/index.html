@@ -3,8 +3,8 @@
 <head>
   <title>Serial Connect</title>
   <script src="/socket.io/socket.io.js"></script>
+  <script src="//d3js.org/d3.v3.min.js"></script>
   <script src="/oscillator.js"></script>
-
 
   <style type="text/css">
     body {
@@ -34,6 +34,18 @@
       margin-top: 5em;
       z-index: 1;
     }
+
+    /* d3-visualize */
+    svg {
+      font-family: "Helvetica Neue", Helvetica;
+    }
+
+    .line {
+      fill: none;
+      stroke: #000;
+      stroke-width: 2px;
+    }
+    /* d3-visualize */
   </style>
 </head>
 <body>
@@ -42,6 +54,8 @@
     <button onclick="ms.stop()">Stop</button>
   </nav>
 
+
+  <script src="/d3-visualize.js"></script>
   <script src="/singing-bowls.js"></script>
 </body>
 </html>
