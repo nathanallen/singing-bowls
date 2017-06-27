@@ -148,7 +148,7 @@ FrequencySampler.prototype._nextFreq = function() {
     this.loudest.freq = this.freq;
   }
 
-  setTimeout(graphView(this.freq, amp), 0);
+  graphView(this.freq, amp);
 
   this.freq += this.stepSize;
   this.osc.changeFrequency(this.freq);
