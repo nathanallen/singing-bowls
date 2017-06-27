@@ -132,7 +132,9 @@ FrequencySampler.prototype.stop = function(){
 }
 FrequencySampler.prototype.play = function(){
   this.osc.changeFrequency(this.freq);
-  this.intervalID = setInterval(this._nextFreq.bind(this), 10);
+  setTimeout(function(){
+    this.intervalID = setInterval(this._nextFreq.bind(this), 10);
+  }.bind(this), 300); // pause before taking readings to avoid interferance
 }
 FrequencySampler.prototype._nextFreq = function() {
   var heard = this.audioIn.sample();
