@@ -16,7 +16,8 @@ AudioIn.prototype.incoming = function(gain){
 
     this.running_avg = Math.floor( (this.running_avg + totals) / 2 );
   }
-  this.samples[this.samples_idx] = gain || window.amplitude;
+
+  this.samples[this.samples_idx] = gain;
   this.samples_idx++;
 
   if (gain < this.running_min) { this.running_min = gain };
