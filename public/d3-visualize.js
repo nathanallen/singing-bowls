@@ -41,7 +41,7 @@ var area = d3.svg.area()
 function renderSamples(raw) {
   var OFFSET = 500;
   data = raw.map(function(amp, i){
-  return {id: 0, freq: i+OFFSET, amp: amp}
+    return {id: 0, freq: i+OFFSET, amp: amp}
   })
 
   // Nest stock values by id.
@@ -87,16 +87,16 @@ function lines() {
     e.append("path")
       .attr("class", "line");
 
-    e.append("circle")
-      .attr("r", 5)
-      .style("fill", function(d) { return color(d.key); })
-      .style("stroke", "#000")
-      .style("stroke-width", "2px");
+    // e.append("circle")
+    //   .attr("r", 5)
+    //   .style("fill", function(d) { return color(d.key); })
+    //   .style("stroke", "#000")
+    //   .style("stroke-width", "2px");
 
-    e.append("text")
-      .attr("x", 12)
-      .attr("dy", ".31em")
-      .text(d.key);
+    // e.append("text")
+    //   .attr("x", 12)
+    //   .attr("dy", ".31em")
+    //   .text(d.key);
   });
 
   function draw(k) {
@@ -114,11 +114,13 @@ function lines() {
   }
 
   var k = 1, n = ids[0].values.length;
-  d3.timer(function() {
+  // d3.timer(function() {
+  for(var z=0; z<n; z++){
     draw(k);
     if ((k += 2) >= n - 1) {
       draw(n - 1);
       return true;
     }
-  });
+  }
+  // });
 }

@@ -54,12 +54,13 @@ AudioIn.prototype.sample = function() {
 
 var graphView = (function(){
   var els = {};
+  var chartEl  = document.querySelector(".bar-chart")
   return function(freq, amp){
     if(!els[freq]) {
       els[freq] = document.createElement("div");;
-      document.body.appendChild(els[freq]);
+      chartEl.appendChild(els[freq]);
     }
-    els[freq].setAttribute("style", `height:${amp*2}px;`);
+    els[freq].setAttribute("style", `height:${amp}px;`);
     els[freq].setAttribute("data-freq", freq);
   }
 }())

@@ -15,6 +15,12 @@
       position: fixed;
       bottom: 10px;
       right: 10px;
+      z-index: 100;
+    }
+    .bar-chart {
+      transform: rotateX(180deg);
+      position: absolute;
+      height: 341px; /*max amplitude*/
     }
     div {
       min-height: 5px;
@@ -37,6 +43,7 @@
 
     /* d3-visualize */
     svg {
+      position: absolute;
       font-family: "Helvetica Neue", Helvetica;
     }
 
@@ -49,6 +56,7 @@
   </style>
 </head>
 <body>
+  <section class="bar-chart"></section>
   <nav>
     <button onclick="ms.play();">Start</button>
     <button onclick="ms.stop()">Stop</button>
